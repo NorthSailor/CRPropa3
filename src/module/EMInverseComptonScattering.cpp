@@ -11,8 +11,9 @@ namespace crpropa {
 
 static const double mec2 = mass_electron * c_squared;
 
-EMInverseComptonScattering::EMInverseComptonScattering(PhotonField photonField, bool havePhotons, double limit) {
+EMInverseComptonScattering::EMInverseComptonScattering(PhotonField photonField, bool havePhotons, double thinning, double limit) {
 	setPhotonField(photonField);
+	this->thinning = thinning;
 	this->havePhotons = havePhotons;
 	this->limit = limit;
 }
@@ -31,6 +32,10 @@ void EMInverseComptonScattering::setHavePhotons(bool havePhotons) {
 
 void EMInverseComptonScattering::setLimit(double limit) {
 	this->limit = limit;
+}
+
+void EMInverseComptonScattering::setThinning(double thinning) {
+	this->thinning = thinning;
 }
 
 void EMInverseComptonScattering::initRate(std::string filename) {
@@ -182,16 +187,23 @@ void EMInverseComptonScattering::performInteraction(Candidate *candidate) const 
 	// sample electron energy after scattering
 	static ICSSecondariesEnergyDistribution distribution;
 	double Enew = distribution.sample(E, s);
+	double f = Enew / E; // energy fraction retained by electron
+	double w0 = candidate->getWeight();
 
 	// add up-scattered photon
 	double Esecondary = E - Enew;
 	if (havePhotons) {
-		Vector3d pos = random.randomInterpolatedPosition(candidate->previous.getPosition(), candidate->current.getPosition());
-		candidate->addSecondary(22, Esecondary / (1 + z), pos);
+    	if (random.rand() < pow(1 - f, thinning)) {
+    		Vector3d pos = random.randomInterpolatedPosition(candidate->previous.getPosition(), candidate->current.getPosition());
+        	double w = w0 / pow(1 - f, thinning);
+        	candidate->addSecondary(22,  Esecondary / (1 + z), pos, w); 
+    	} 
 	}
 
 	// update the primary particle energy; do this after adding the secondary to correctly set the secondary's parent
-	candidate->current.setEnergy(Enew / (1 + z));
+	if (random.rand() < pow(f, thinning)) {
+		candidate->current.setEnergy(Enew / (1 + z));
+	}
 }
 
 void EMInverseComptonScattering::process(Candidate *candidate) const {
@@ -214,10 +226,12 @@ void EMInverseComptonScattering::process(Candidate *candidate) const {
 	// check for interaction
 	Random &random = Random::instance();
 	double randDistance = -log(random.rand()) / rate;
-	if (candidate->getCurrentStep() > randDistance)
-		performInteraction(candidate);
-	else
+	if (candidate->getCurrentStep() < randDistance) {
 		candidate->limitNextStep(limit / rate);
+		return;
+	} else
+		performInteraction(candidate);
+		
 }
 
 } // namespace crpropa
