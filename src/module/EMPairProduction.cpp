@@ -169,7 +169,7 @@ class PPSecondariesEnergyDistribution {
 void EMPairProduction::performInteraction(Candidate *candidate) const {
 	// scale particle energy instead of background photon energy
 	double z = candidate->getRedshift();
-	double E = candidate->current.getEnergy() * (1 + z);
+	double E = candidate->current.getEnergy();
 
 	// cosmic ray photon is lost after interacting
 	candidate->setActive(false);
@@ -179,7 +179,7 @@ void EMPairProduction::performInteraction(Candidate *candidate) const {
 		return;
 
 	// check if in tabulated energy range
-	if (E < tabE.front() or (E > tabE.back()))
+	if (E / (1 + z) < tabE.front() or (E / (1 + z) > tabE.back()))
 		return;
 
 	// sample the value of s
@@ -205,11 +205,11 @@ void EMPairProduction::performInteraction(Candidate *candidate) const {
 
     if (random.rand() < pow(f, thinning)){
         double w = w0 / pow(f, thinning);
-        candidate->addSecondary(11, Ep / (1 + z), pos, w); 
+        candidate->addSecondary(11, Ep, pos, w); 
     }
     if (random.rand() < pow(1 - f, thinning)){
         double w = w0 / pow(1 - f, thinning);
-        candidate->addSecondary(-11, Ee / (1 + z), pos, w); 
+        candidate->addSecondary(-11, Ee, pos, w); 
     }
 }
 

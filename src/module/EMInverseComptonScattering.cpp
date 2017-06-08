@@ -172,9 +172,9 @@ class ICSSecondariesEnergyDistribution {
 void EMInverseComptonScattering::performInteraction(Candidate *candidate) const {
 	// scale the particle energy instead of background photons
 	double z = candidate->getRedshift();
-	double E = candidate->current.getEnergy() * (1 + z);
+	double E = candidate->current.getEnergy();
 
-	if (E < tabE.front() or E > tabE.back())
+	if (E / (1 + z) < tabE.front() or E / (1 + z) > tabE.back())
 		return;
 
 	// sample the value of s
@@ -192,17 +192,18 @@ void EMInverseComptonScattering::performInteraction(Candidate *candidate) const 
 
 	// add up-scattered photon
 	double Esecondary = E - Enew;
+
 	if (havePhotons) {
     	if (random.rand() < pow(1 - f, thinning)) {
     		Vector3d pos = random.randomInterpolatedPosition(candidate->previous.getPosition(), candidate->current.getPosition());
         	double w = w0 / pow(1 - f, thinning);
-        	candidate->addSecondary(22,  Esecondary / (1 + z), pos, w); 
+        	candidate->addSecondary(22,  Esecondary, pos, w); 
     	} 
 	}
 
 	// update the primary particle energy; do this after adding the secondary to correctly set the secondary's parent
 	if (random.rand() < pow(f, thinning)) {
-		candidate->current.setEnergy(Enew / (1 + z));
+		candidate->current.setEnergy(Enew);
 	}
 }
 
