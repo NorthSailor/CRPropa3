@@ -44,25 +44,49 @@ static double getAngularFrequency(Candidate *candidate) {
 	return energy / reducedPlanckConstant; // J / (J * s / rad) -> rad / s
 }
 
+static double getDelta(Candidate *candidate, double L, double ne) {
+	return 0.053 * (ne / 0.001)
+		* (1000 * eV / getAngularFrequency(candidate)) // Perhaps, omega means energy?
+							// dimensions would make more sense that way.
+							// * (1000 * eV) / (candidate->current.getEnergy())
+		* (L / kpc);
+}
+
+static double getTheta(Candidate *candidate, ref_ptr<MagneticField> bField, double M) {
+	double tan2th = 0.028 * 1.0; //! @todo
+}
+
 /**
  * @brief Finds the probability that a gamma ray will oscillate into an axion-like particle.
  * @param candidate The particle in question.
  * @param bField The current magnetic field.
  * @return The probability that the particle will oscillate. (0 to 1).
  */
-static double getOscillationProbability(Candidate *candidate, ref_ptr<MagneticField> bField) {
-	return 0.0;
+static double getOscillationProbability(Candidate *candidate, ref_ptr<MagneticField> bField, double L, double ne, double M) {
+	// If the particle is going upwards, it has 20 percent change to vanish.
+	Vector3d v = candidate->previous.getVelocity();
+	if (v.getUnitVector().getY() < 0.0)
+		return 0.5;
+	else
+		return 0.0;
 }
 
-ALPOscillation::ALPOscillation(ref_ptr<MagneticField> _Bfield) :
-	Bfield(_Bfield) {
+ALPOscillation::ALPOscillation(ref_ptr<MagneticField> _Bfield,
+		double _L,
+		double _ne,
+		double _M) :
+	Bfield(_Bfield),
+	L(_L),
+	ne(_ne),
+	M(_M)
+{
 }
 
 void ALPOscillation::process(Candidate *candidate) const {
-	static double L = 500.0 * Mpc; // Chance of disappearance in 500 Mpc.
 	// Find the trajectory length step.
 	double lengthStep = candidate->getCurrentStep();
-	double probability = getOscillationProbability(candidate, Bfield);
+	double probability = getOscillationProbability(candidate, Bfield,
+			L, ne, M);
 	double stepProbability = lengthStep / L * probability;
 	if (triggerWithProbability(stepProbability) == true) {
 		candidate->setActive(false);

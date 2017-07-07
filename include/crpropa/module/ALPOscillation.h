@@ -9,8 +9,11 @@ namespace crpropa {
 class ALPOscillation : public Module {
 private:
 	ref_ptr<MagneticField> Bfield;
+	double L; // The magnetic domain length [m].
+	double ne; // The electron density [cm^-3];
+	double M; // The mass scale [J];
 public:
-	ALPOscillation(ref_ptr<MagneticField> _Bfield);
+	ALPOscillation(ref_ptr<MagneticField> _Bfield, double _L, double _ne, double _M);
 	void process(Candidate *candidate) const;
 };
 
