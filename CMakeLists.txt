@@ -296,6 +296,7 @@ add_library(crpropa SHARED
 	src/PhotonPropagation.cpp
 	src/GridTools.cpp
 	src/XmlExecute.cpp
+	src/module/ALPOscillation.cpp
 	src/module/BreakCondition.cpp
 	src/module/Boundary.cpp
 	src/module/Observer.cpp

@@ -26,6 +26,7 @@
 
 
 %{
+#include "crpropa/module/ALPOscillation.h"
 #include "crpropa/module/NuclearDecay.h"
 #include "crpropa/module/ElectronPairProduction.h"
 #include "crpropa/module/PhotoPionProduction.h"
@@ -199,6 +200,7 @@ class RangeError {};
 
 %template(ParticleCollectorRefPtr) crpropa::ref_ptr<crpropa::ParticleCollector>;
 
+%include "crpropa/module/ALPOscillation.h"
 %include "crpropa/module/ParticleCollector.h"
 %include "crpropa/module/HDF5Output.h"
 %include "crpropa/module/OutputShell.h"
