@@ -25,6 +25,9 @@ endif(CMAKE_COMPILER_IS_GNUCXX AND NOT APPLE)
 # Add build type for profiling
 SET(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS} -ggdb -fno-omit-frame-pointer")
 
+# Enable C++11
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 # Set default build-type to release to enable performance improvements
 if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)

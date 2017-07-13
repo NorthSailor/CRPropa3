@@ -44,6 +44,13 @@ static double getAngularFrequency(Candidate *candidate) {
 	return energy / reducedPlanckConstant; // J / (J * s / rad) -> rad / s
 }
 
+/**
+ * @brief Calculates the Delta term as described in the paper.
+ * @param candidate The particle in question.
+ * @param L The magnetic domain length [m].
+ * @param ne The electron density [cm^-3].
+ * @return The Delta term.
+ */
 static double getDelta(Candidate *candidate, double L, double ne) {
 	return 0.053 * (ne / 0.001)
 		* (1000 * eV / getAngularFrequency(candidate)) // Perhaps, omega means energy?
@@ -52,23 +59,44 @@ static double getDelta(Candidate *candidate, double L, double ne) {
 		* (L / kpc);
 }
 
-static double getTheta(Candidate *candidate, ref_ptr<MagneticField> bField, double M) {
-	double tan2th = 0.028 * 1.0; //! @todo
+/**
+ * @brief Calculates the tan(2*theta) term as described in the paper.
+ * @param candidate The particle in question.
+ * @param bField The current magnetic field.
+ * @param M The mass density [J].
+ * @param ne The electron density [cm^-3].
+ * @return The tan(2*theta) term.
+ */
+static double getTan2Theta(Candidate *candidate,
+                           ref_ptr<MagneticField> bField,
+                           double M, double ne) {
+    return 2.8 *
+            10 * TeV // 10^-3 * 10^-3 / 1 keV * 10^13 GeV = 10^13 eV = 10 * TeV
+            / muG
+            * getAngularFrequency(candidate)
+            / ne
+            / M
+            * getTransverseBfield(candidate, bField);
 }
 
 /**
  * @brief Finds the probability that a gamma ray will oscillate into an axion-like particle.
  * @param candidate The particle in question.
  * @param bField The current magnetic field.
+ * @param L The length of the magnetic field domain [m].
+ * @param ne The electron density in [cm^-3].
+ * @param M The mass density in [J]
  * @return The probability that the particle will oscillate. (0 to 1).
  */
-static double getOscillationProbability(Candidate *candidate, ref_ptr<MagneticField> bField, double L, double ne, double M) {
-	// If the particle is going upwards, it has 20 percent change to vanish.
-	Vector3d v = candidate->previous.getVelocity();
-	if (v.getUnitVector().getY() < 0.0)
-		return 0.5;
-	else
-		return 0.0;
+static double getOscillationProbability(Candidate *candidate,
+                                        ref_ptr<MagneticField> bField,
+                                        double L, double ne, double M) {
+    double tan2th = getTan2Theta(candidate, bField, M, ne);
+    double theta2 = atan(tan2th);
+    double Delta = getDelta(candidate, L, ne);
+    double cosTheta2 = cos(theta2);
+    double sinTheta2 = sin(theta2);
+    return pow(sinTheta2, 2) * pow(sin(Delta / cosTheta2), 2);
 }
 
 ALPOscillation::ALPOscillation(ref_ptr<MagneticField> _Bfield,
@@ -93,5 +121,5 @@ void ALPOscillation::process(Candidate *candidate) const {
 	}
 }
 
-};
+}
 
